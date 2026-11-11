@@ -1,6 +1,6 @@
 # WP Fancybox
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/tikhomirov/wp-fancybox-plugin/releases)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/tikhomirov/wp-fancybox-plugin/releases)
 [![WordPress](https://img.shields.io/badge/WordPress-4.6%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-8.0%2B-purple.svg)](https://php.net/)
 

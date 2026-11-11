@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Fancybox js
  * Description: This WordPress plugin enable support fancybox js for posts.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Text Domain: fancybox
  * Domain Path: /languages
  * Author: Aleksey Tikhomirov
@@ -95,23 +95,42 @@ class FancyBox{
 
                 <?= defined('WP_DEBUG') && WP_DEBUG ? "console.log('WP FancyBox included');" : ''; ?>
 
-                $("<?= esc_attr($this->settings['selector']); ?>").each( function() {
-
-                    let myObject = $(this);
-                    let parent = $(this).parent();
-
-                    if ($(this).parent() !== 'a') {
-                        if( $(this).attr('srcset') !== undefined ) {
-                            var srcset = $(this).attr('srcset');
-                            var fullimg = srcset.replace(/ .*/, '');
-                            myObject.replaceWith('<a data-src="' + fullimg + '" data-fancybox="images">' + myObject.prop('outerHTML') + '</a>');
-                        } else {
-                            myObject.replaceWith('<a data-src="' + $(this).attr('src') + '" data-fancybox="images">' + myObject.prop('outerHTML') + '</a>');
-                        }
-
-                    } else if ($(this).parent() === 'a') {
-                        parent.attr("data-fancybox", "images").removeAttr("href");
+                const isImageUrl = function (url) {
+                    return typeof url === 'string' && /\.(avif|gif|jpe?g|png|svg|webp)(\?.*)?(#.*)?$/i.test(url);
+                };
+                // Largest candidate from srcset, otherwise data-src (lazy loaders) or src.
+                const fullImageUrl = function ($img) {
+                    const srcset = $img.attr('srcset') || $img.attr('data-srcset');
+                    if (srcset) {
+                        let best = '', bestW = -1;
+                        srcset.split(',').forEach(function (part) {
+                            const bits = part.trim().split(/\s+/);
+                            const w = bits[1] ? parseInt(bits[1], 10) || 0 : 0;
+                            if (bits[0] && w >= bestW) { best = bits[0]; bestW = w; }
+                        });
+                        if (best) { return best; }
                     }
+                    return $img.attr('data-src') || $img.attr('src') || '';
+                };
+
+                $("<?= esc_attr($this->settings['selector']); ?>").each( function() {
+                    const $img = $(this);
+                    const $parent = $img.parent();
+
+                    if ($parent.is('a')) {
+                        // Keep the real href; only links to images become gallery items.
+                        if (isImageUrl($parent.attr('href'))) {
+                            $parent.attr('data-fancybox', 'images');
+                        }
+                        return;
+                    }
+
+                    const full = fullImageUrl($img);
+                    if (!full || full.indexOf('data:') === 0) {
+                        return;
+                    }
+                    // wrap() keeps the original <img> node, so loading="lazy" and decoding stay intact.
+                    $img.wrap($('<a>', { href: full, 'data-fancybox': 'images' }));
                 } );
 
                 Fancybox.bind('[data-fancybox="images"], [data-fancybox="gallery"]', {});
